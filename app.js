@@ -134,6 +134,20 @@ document.addEventListener("DOMContentLoaded", () => {
     currentRole = currentUser.role;
     showAppLayout();
   }
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      renderCurrentView();
+    });
+  }
+
+  const subjectFilter = document.getElementById("subjectFilter");
+  if (subjectFilter) {
+    subjectFilter.addEventListener("change", () => {
+      renderCurrentView();
+    });
+  }
 });
 
 function continueAsGuest() {
@@ -416,14 +430,17 @@ function renderCurrentView() {
     filtered = filtered.filter((item) => item.subject === selectedSubject);
   }
 
-  // Search filter
+  // Search filter: Checks title, subject, uploader, tagged faculty, AND verifying faculty
   if (searchQuery) {
     filtered = filtered.filter(
       (item) =>
-        item.title.toLowerCase().includes(searchQuery) ||
-        item.subject.toLowerCase().includes(searchQuery) ||
+        (item.title && item.title.toLowerCase().includes(searchQuery)) ||
+        (item.subject && item.subject.toLowerCase().includes(searchQuery)) ||
+        (item.uploader_name &&
+          item.uploader_name.toLowerCase().includes(searchQuery)) ||
         (item.teacher && item.teacher.toLowerCase().includes(searchQuery)) ||
-        item.uploader_name.toLowerCase().includes(searchQuery),
+        (item.verified_by &&
+          item.verified_by.toLowerCase().includes(searchQuery)),
     );
   }
 
@@ -439,23 +456,28 @@ function renderCurrentView() {
 
   filtered.forEach((item) => {
     const card = document.createElement("article");
-    const isExpert = item.status === "expert";
+    const isExpert = item.status === "expert" || item.status === "verified";
     const isFlagged = item.status === "flagged";
 
     card.className = `resource-card ${isExpert ? "expert-card" : isFlagged ? "flagged-card" : ""}`;
 
+    // Status Badge showing endorsing faculty name if verified
     let statusBadge = `<span class="badge badge-tag">Community Submission</span>`;
-    if (isExpert)
-      statusBadge = `<span class="badge badge-verified">★ Faculty Endorsed</span>`;
-    if (isFlagged)
+    if (isExpert) {
+      const endorserName = item.verified_by || item.teacher || "Faculty";
+      statusBadge = `<span class="badge badge-verified">★ Faculty Endorsed (${endorserName})</span>`;
+    }
+    if (isFlagged) {
       statusBadge = `<span class="badge badge-caution">⚠️ Review Warning</span>`;
+    }
 
     // Faculty Annotation
     let annotationHTML = "";
     if (item.teacher_note) {
+      const annotator = item.verified_by || item.teacher || "Faculty Review";
       annotationHTML = `
         <div class="faculty-annotation ${isFlagged ? "caution-box" : ""}">
-          <div class="annotation-badge">${item.teacher}</div>
+          <div class="annotation-badge">${annotator}</div>
           <p class="annotation-text">"${item.teacher_note}"</p>
         </div>`;
     }
@@ -468,7 +490,7 @@ function renderCurrentView() {
       ${
         isExpert
           ? `<button class="btn btn-small btn-outline" onclick="revokeExpert('${item.id}')">↩ Revoke Expert</button>`
-          : `<button class="btn btn-small btn-secondary" onclick="updateStatus('${item.id}', 'expert')">★ Mark Expert</button>`
+          : `<button class="btn btn-small btn-secondary" onclick="endorseNote('${item.id}')">★ Mark Expert</button>`
       }
       <button class="btn btn-small btn-warning" onclick="promptFlag('${item.id}')">Highlight Error</button>
       <button class="btn btn-small btn-danger" onclick="deleteResource('${item.id}')">Remove Post</button>
@@ -623,19 +645,14 @@ async function revokeExpert(id) {
   const confirmRevoke = confirm("Revoke expert endorsement for this note?");
   if (!confirmRevoke) return;
 
+  // 1. Optimistic Local State Update
   item.status = "pending";
-
-  if (item.teacher_note && item.teacher_note.includes(currentUser.name)) {
-    item.teacher_note = item.teacher_note
-      .split(" | ")
-      .filter((note) => !note.includes(currentUser.name))
-      .join(" | ");
-  } else if (item.teacher_note && !item.teacher_note.includes("[")) {
-    item.teacher_note = "";
-  }
+  item.verified_by = "";
+  item.teacher_note = "";
 
   renderCurrentView();
 
+  // 2. Sync to Google Sheets via SheetDB
   try {
     await fetch(`${SHEETDB_URL}/id/${id}?sheet=resources`, {
       method: "PATCH",
@@ -643,12 +660,55 @@ async function revokeExpert(id) {
       body: JSON.stringify({
         data: {
           status: "pending",
-          teacher_note: item.teacher_note,
+          verified_by: "",
+          teacher_note: "",
         },
       }),
     });
   } catch (err) {
     console.error("Failed to revoke expert status:", err);
+  }
+}
+
+async function endorseNote(id) {
+  const item = cachedResources.find((r) => r.id === id);
+  if (!item) return;
+
+  if (!currentUser || currentUser.role !== "teacher") {
+    alert("Only verified faculty members can endorse notes.");
+    return;
+  }
+
+  const feedbackText = prompt(
+    "Enter an optional recommendation note (or click OK to proceed):",
+    "Endorsed for 3rd Sem syllabus",
+  );
+  if (feedbackText === null) return; // Student/Teacher hit Cancel
+
+  const noteMessage = feedbackText.trim() || "Endorsed for 3rd Sem syllabus";
+
+  // 1. Optimistic Local State Update
+  item.status = "verified";
+  item.verified_by = currentUser.name;
+  item.teacher_note = noteMessage;
+
+  renderCurrentView();
+
+  // 2. Sync to Google Sheets via SheetDB
+  try {
+    await fetch(`${SHEETDB_URL}/id/${id}?sheet=resources`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: {
+          status: "verified",
+          verified_by: currentUser.name,
+          teacher_note: noteMessage,
+        },
+      }),
+    });
+  } catch (err) {
+    console.error("Endorsement failed:", err);
   }
 }
 
