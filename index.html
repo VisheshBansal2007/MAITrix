@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAITrix | 2nd Year Core Hub</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- AUTH SCREEN (Shown if not logged in) -->
+    <div id="authSection" class="auth-container">
+      <div class="auth-box">
+        <div class="brand">
+          <h2>MAIT<span>rix</span></h2>
+          <p class="tagline">2nd Year Academic Exchange & Review Portal</p>
+        </div>
+
+        <div class="tab-switcher">
+          <button
+            class="tab-btn active"
+            id="tabStudent"
+            onclick="switchAuthRole('student')"
+          >
+            Student Portal
+          </button>
+          <button
+            class="tab-btn"
+            id="tabTeacher"
+            onclick="switchAuthRole('teacher')"
+          >
+            Faculty Portal
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+          <h3 id="formTitle">Student Login</h3>
+          <div class="form-row">
+            <label id="userIdLabel">Enrollment Number</label>
+            <input
+              type="text"
+              id="loginId"
+              placeholder="e.g. 00014802724"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <input
+              type="password"
+              id="loginPass"
+              placeholder="Enter password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            Sign In
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline btn-block"
+            style="margin-top: 10px"
+            onclick="continueAsGuest()"
+          >
+            👀 Explore as Guest (No Login Required)
+          </button>
+          <p class="toggle-link">
+            New here?
+            <a href="#" onclick="toggleAuthMode('signup')">Create an account</a>
+          </p>
+        </form>
+
+        <!-- Signup Form -->
+        <form
+          id="signupForm"
+          class="auth-form hidden"
+          onsubmit="handleSignup(event)"
+        >
+          <h3 id="signupTitle">Student Registration</h3>
+          <div class="form-row">
+            <label>Full Name</label>
+            <input
+              type="text"
+              id="regName"
+              placeholder="e.g.Vansh Garg"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <label id="regIdLabel">Enrollment Number / User ID</label>
+            <input
+              type="text"
+              id="regId"
+              placeholder="e.g. 00014802724"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <label>Password</label>
+            <input
+              type="password"
+              id="regPass"
+              placeholder="Create a secure password"
+              required
+            />
+          </div>
+
+          <!-- Dynamic Department Select for Faculty -->
+          <div class="form-row hidden" id="teacherSubjectGroup">
+            <!-- Faculty Security PIN (Shown only when Faculty is selected) -->
+            <div class="form-row hidden" id="teacherSecurityGroup">
+              <label>Faculty Security Code</label>
+              <input
+                type="password"
+                id="facultySecretCode"
+                placeholder="Enter Security Code"
+              />
+            </div>
+            <label>Assigned 3rd Sem Subject</label>
+            <select id="regSubject">
+              <option value="">-- Select Your Subject --</option>
+              <option value="Computational Methods">
+                Computational Methods
+              </option>
+              <option value="Data Structures">Data Structures</option>
+              <option value="Object-Oriented Programming using C++">
+                Object-Oriented Programming using C++
+              </option>
+              <option value="Digital Logic and Computer Design">
+                Digital Logic and Computer Design
+              </option>
+              <option value="Discrete Mathematics">Discrete Mathematics</option>
+              <option value="Signals and Systems">Signals and Systems</option>
+              <option value="Analog Electronics-I">Analog Electronics-I</option>
+              <option value="Analog Communications">
+                Analog Communications
+              </option>
+              <option value="Electrical Materials">Electrical Materials</option>
+              <option value="Electromagnetic Field Theory">
+                Electromagnetic Field Theory
+              </option>
+              <option value="Electrical Machines - I">
+                Electrical Machines - I
+              </option>
+              <option value="Electrical Engineering Workshop">
+                Electrical Engineering Workshop
+              </option>
+              <option value="Theory of Machines">Theory of Machines</option>
+              <option value="Strength of Materials">
+                Strength of Materials
+              </option>
+              <option value="Thermal Engineering-I">
+                Thermal Engineering-I
+              </option>
+              <option value="Manufacturing Science and Technology-I">
+                Manufacturing Science and Technology-I
+              </option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-secondary btn-block">
+            Sign Up
+          </button>
+          <p class="toggle-link">
+            Already registered?
+            <a href="#" onclick="toggleAuthMode('login')">Sign in instead</a>
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <div id="appLayout" class="app-layout hidden">
+      <!-- Left Navigation -->
+      <aside class="sidebar">
+        <div class="brand" onclick="resetToFeed()" style="cursor: pointer">
+          <div class="brand-header">
+            <div class="brand-title-wrap">
+              <h2>MAIT<span>rix</span></h2>
+              <p class="tagline">3rd Semester Gateway</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="nav-menu">
+          <button class="nav-link active" onclick="setView('feed')">
+            📚 Academic Feed
+          </button>
+          <button
+            class="nav-link"
+            id="navMyUploads"
+            onclick="setView('myUploads')"
+          >
+            📁 My Uploads
+          </button>
+          <button
+            class="nav-link"
+            id="navTeacherQueue"
+            style="display: none"
+            onclick="setView('teacherQueue')"
+          >
+            📋 Verification Queue
+          </button>
+          <button class="nav-link" onclick="setView('community')">
+            💬 Subject Communities
+          </button>
+
+          <button class="nav-link logout-link" onclick="logout()">
+            🚪 Sign Out
+          </button>
+        </nav>
+
+        <div class="user-profile-badge">
+          <div class="avatar" id="userAvatar">U</div>
+          <div class="user-meta">
+            <strong id="userNameDisplay">User Name</strong>
+            <span id="userRoleDisplay">Student • Sem 3</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Workspace Area -->
+      <div class="workspace-area">
+        <!-- Top Bar -->
+        <header class="top-nav">
+          <div class="search-box">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search by topic, subject, or professor..."
+              oninput="handleSearch()"
+            />
+          </div>
+          <div class="top-actions">
+            <span class="badge-role" id="roleTag">Student Mode</span>
+          </div>
+        </header>
+
+        <!-- Center & Right Panes -->
+        <div class="dashboard-columns">
+          <!-- Center Content Stream -->
+          <main class="center-feed">
+            <!-- Subject Filter Strip -->
+            <div class="filter-strip" id="filterBar">
+              <label for="subjectFilter">Filter by 3rd Sem Subject:</label>
+              <select id="subjectFilter" onchange="renderCurrentView()">
+                <option value="all">All 3rd Sem Subjects</option>
+                <option value="Computational Methods">
+                  Computational Methods
+                </option>
+                <option value="Data Structures">Data Structures</option>
+                <option value="Object-Oriented Programming using C++">
+                  Object-Oriented Programming using C++
+                </option>
+                <option value="Digital Logic and Computer Design">
+                  Digital Logic and Computer Design
+                </option>
+                <option value="Discrete Mathematics">
+                  Discrete Mathematics
+                </option>
+                <option value="Signals and Systems">Signals and Systems</option>
+                <option value="Analog Electronics-I">
+                  Analog Electronics-I
+                </option>
+                <option value="Analog Communications">
+                  Analog Communications
+                </option>
+                <option value="Electrical Materials">
+                  Electrical Materials
+                </option>
+                <option value="Electromagnetic Field Theory">
+                  Electromagnetic Field Theory
+                </option>
+                <option value="Electrical Machines - I">
+                  Electrical Machines - I
+                </option>
+                <option value="Electrical Engineering Workshop">
+                  Electrical Engineering Workshop
+                </option>
+                <option value="Theory of Machines">Theory of Machines</option>
+                <option value="Strength of Materials">
+                  Strength of Materials
+                </option>
+                <option value="Thermal Engineering-I">
+                  Thermal Engineering-I
+                </option>
+                <option value="Manufacturing Science and Technology-I">
+                  Manufacturing Science and Technology-I
+                </option>
+              </select>
+            </div>
+
+            <!-- Dynamic Feed Container -->
+            <div id="feedStream" class="feed-stream">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Community Discussions View (Toggled via Sidebar) -->
+            <div id="communityView" class="community-section hidden">
+              <h3>💬 3rd Semester Study Communities</h3>
+              <p class="subtext">
+                Select a subject channel to discuss doubts, assignments, and
+                exam insights with peers.
+              </p>
+              <div class="community-grid" id="communityGrid">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </main>
+
+          <!-- Right Plain Upload Panel (Students Only) -->
+          <aside class="right-upload-panel" id="uploadSidePanel">
+            <div class="upload-panel-card">
+              <div class="upload-panel-header">
+                <h3>Upload Academic Note</h3>
+                <p>Submit materials for faculty verification & peer access</p>
+              </div>
+
+              <form
+                class="upload-form"
+                id="uploadForm"
+                onsubmit="handleUpload(event)"
+              >
+                <div class="form-row">
+                  <label>Resource Title</label>
+                  <input
+                    type="text"
+                    id="uploadTitle"
+                    placeholder="e.g. AVL Trees or DS Endterm 2025 Solved"
+                    required
+                  />
+                </div>
+
+                <div class="form-row">
+                  <label>Subject</label>
+                  <select
+                    id="uploadSubject"
+                    onchange="populateTeachers()"
+                    required
+                  >
+                    <option value="">-- Choose Subject --</option>
+                    <option value="Computational Methods">
+                      Computational Methods
+                    </option>
+                    <option value="Data Structures">Data Structures</option>
+                    <option value="Object-Oriented Programming using C++">
+                      Object-Oriented Programming using C++
+                    </option>
+                    <option value="Digital Logic and Computer Design">
+                      Digital Logic and Computer Design
+                    </option>
+                    <option value="Discrete Mathematics">
+                      Discrete Mathematics
+                    </option>
+                    <option value="Signals and Systems">
+                      Signals and Systems
+                    </option>
+                    <option value="Analog Electronics-I">
+                      Analog Electronics-I
+                    </option>
+                    <option value="Analog Communications">
+                      Analog Communications
+                    </option>
+                    <option value="Electrical Materials">
+                      Electrical Materials
+                    </option>
+                    <option value="Electromagnetic Field Theory">
+                      Electromagnetic Field Theory
+                    </option>
+                    <option value="Electrical Machines - I">
+                      Electrical Machines - I
+                    </option>
+                    <option value="Electrical Engineering Workshop">
+                      Electrical Engineering Workshop
+                    </option>
+                    <option value="Theory of Machines">
+                      Theory of Machines
+                    </option>
+                    <option value="Strength of Materials">
+                      Strength of Materials
+                    </option>
+                    <option value="Thermal Engineering-I">
+                      Thermal Engineering-I
+                    </option>
+                    <option value="Manufacturing Science and Technology-I">
+                      Manufacturing Science and Technology-I
+                    </option>
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <label>Tag Faculty In-Charge</label>
+                  <select id="uploadTeacher" required>
+                    <option value="">-- Select Subject First --</option>
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <label>Google Drive Shareable Link (PDF / Photo)</label>
+                  <input
+                    type="url"
+                    id="uploadLink"
+                    placeholder="https://drive.google.com/file/d/..."
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-secondary btn-block"
+                  id="btnUploadSubmit"
+                >
+                  Post to Feed
+                </button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
