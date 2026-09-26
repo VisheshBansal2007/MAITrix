@@ -472,15 +472,36 @@ function renderCurrentView() {
       statusBadge = `<span class="badge badge-caution">⚠️ Review Warning</span>`;
     }
 
-    // Faculty Annotation
+    // Faculty Annotation (Handles multiple flagged errors or single endorsement)
     let annotationHTML = "";
     if (item.teacher_note) {
-      const annotator = item.verified_by || item.teacher || "Faculty Review";
-      annotationHTML = `
-        <div class="faculty-annotation ${isFlagged ? "caution-box" : ""}">
-          <div class="annotation-badge">${annotator}</div>
-          <p class="annotation-text">"${item.teacher_note}"</p>
-        </div>`;
+      if (isFlagged && item.teacher_note.includes("|||")) {
+        // Multiple errors: split and map into distinct warning boxes
+        const errorEntries = item.teacher_note.split("|||");
+        annotationHTML = errorEntries
+          .map((entry) => {
+            const trimmed = entry.trim();
+            // Parse "[Faculty Name]: Message"
+            const match = trimmed.match(/^\[(.*?)\]:\s*(.*)$/);
+            const reviewer = match ? match[1] : item.verified_by || "Faculty Review";
+            const message = match ? match[2] : trimmed;
+
+            return `
+              <div class="faculty-annotation caution-box" style="margin-bottom: 6px;">
+                <div class="annotation-badge">⚠️ ${reviewer}</div>
+                <p class="annotation-text">"${message}"</p>
+              </div>`;
+          })
+          .join("");
+      } else {
+        // Single error or single endorsement note
+        const annotator = item.verified_by || item.teacher || "Faculty Review";
+        annotationHTML = `
+          <div class="faculty-annotation ${isFlagged ? "caution-box" : ""}">
+            <div class="annotation-badge">${isFlagged ? "⚠️ " : ""}${annotator}</div>
+            <p class="annotation-text">"${item.teacher_note.replace(/^\[.*?\]:\s*/, "")}"</p>
+          </div>`;
+      }
     }
 
     // Teacher Review Options
@@ -630,12 +651,52 @@ async function updateStatus(id, newStatus, note = "") {
   }
 }
 
-function promptFlag(id) {
-  const note = prompt(
-    "Enter specific correction guidance or caution message for students:",
+async function promptFlag(id) {
+  const item = cachedResources.find((r) => r.id === id);
+  if (!item) return;
+
+  if (!currentUser || currentUser.role !== "teacher") {
+    alert("Only faculty members can flag notes.");
+    return;
+  }
+
+  const newIssue = prompt(
+    "Enter specific correction guidance or caution message for students:"
   );
-  if (note && note.trim()) {
-    updateStatus(id, "flagged", note.trim());
+  if (!newIssue || !newIssue.trim()) return;
+
+  const currentFaculty = currentUser.name || "Faculty Review";
+  const formattedEntry = `[${currentFaculty}]: ${newIssue.trim()}`;
+
+  // If previous errors already exist, append with a delimiter ( ||| ), otherwise set fresh
+  let combinedNotes = "";
+  if (item.status === "flagged" && item.teacher_note) {
+    combinedNotes = `${item.teacher_note} ||| ${formattedEntry}`;
+  } else {
+    combinedNotes = formattedEntry;
+  }
+
+  // Optimistic UI updates
+  item.status = "flagged";
+  item.verified_by = currentFaculty; // Tracks the latest reviewing faculty
+  item.teacher_note = combinedNotes;
+  renderCurrentView();
+
+  // Sync to SheetDB
+  try {
+    await fetchSheetDB(`/id/${id}?sheet=resources`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: {
+          status: "flagged",
+          verified_by: currentFaculty,
+          teacher_note: combinedNotes,
+        },
+      }),
+    });
+  } catch (err) {
+    console.error("Failed to sync error flag:", err);
   }
 }
 
