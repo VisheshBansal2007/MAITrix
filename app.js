@@ -181,11 +181,36 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sidebar) {
     sidebar.querySelectorAll(".nav-link").forEach((link) => {
       link.addEventListener("click", () => {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 980) {
           closeSidebar();
         }
       });
     });
+  }
+
+  // --- Mobile Right Upload Sheet Toggle Logic ---
+  const uploadPanel = document.getElementById("uploadSidePanel");
+  const uploadBackdrop = document.getElementById("uploadBackdrop");
+
+  window.toggleUploadModal = function () {
+    if (!uploadPanel || !uploadBackdrop) return;
+
+    const isOpen = uploadPanel.classList.contains("active");
+
+    if (isOpen) {
+      uploadPanel.classList.remove("active");
+      uploadBackdrop.classList.remove("active");
+      document.body.style.overflow = ""; // restore scrolling
+    } else {
+      uploadPanel.classList.add("active");
+      uploadBackdrop.classList.add("active");
+      document.body.style.overflow = "hidden"; // lock background scroll while form is open
+    }
+  };
+
+  // Close upload sheet when tapping the dark backdrop
+  if (uploadBackdrop) {
+    uploadBackdrop.addEventListener("click", window.toggleUploadModal);
   }
 });
 

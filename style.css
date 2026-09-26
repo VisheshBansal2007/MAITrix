@@ -658,8 +658,19 @@ body {
   transition: opacity 0.3s ease;
 }
 
-/* Mobile & Tablet screens: Switch fixed sidebar to sliding drawer */
-@media (max-width: 768px) {
+/* ====================================================
+   DESKTOP DEFAULT RESETS (Mobile components hidden)
+   ==================================================== */
+.mobile-upload-fab,
+.close-upload-btn,
+.upload-backdrop {
+  display: none;
+}
+
+/* ====================================================
+   MOBILE & TABLET SCREENS (<= 980px)
+   ==================================================== */
+@media (max-width: 980px) {
   /* Show hamburger toggle button */
   .menu-toggle-btn {
     display: inline-flex;
@@ -667,13 +678,21 @@ body {
     justify-content: center;
   }
 
-  /* Adjust top bar layout for small screens */
+  /* Adjust top bar layout */
   .top-nav {
     padding: 10px 16px;
   }
 
+  /* Hide the mode badge on mobile screens */
+  .top-actions,
+  #roleTag {
+    display: none !important;
+  }
+
+  /* Expand search bar to occupy full width */
   .search-box {
     width: 100%;
+    margin-right: 0;
   }
 
   /* Transform sidebar into an off-canvas drawer */
@@ -684,19 +703,17 @@ body {
     height: 100vh;
     width: 260px;
     max-width: 80vw;
-    background: var(--surface-white);
-    z-index: 999;
+    background: var(--surface-white, #ffffff);
+    z-index: 1001;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Slide sidebar into view when active */
   .sidebar.sidebar-open {
     transform: translateX(0);
   }
 
-  /* Show and fade-in backdrop overlay */
   .sidebar-overlay.active {
     display: block;
     opacity: 1;
@@ -707,22 +724,104 @@ body {
     padding: 14px 12px;
   }
 
-  /* Hide desktop upload panel on mobile screens to prevent overflow */
+  /* ----------------------------------------------------
+     RESPONSIVE UPLOAD MODAL & FAB
+     ---------------------------------------------------- */
+
+  /* Floating Action Button at bottom right */
+  .mobile-upload-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.45);
+    cursor: pointer;
+    z-index: 998;
+    transition:
+      transform 0.15s ease,
+      background-color 0.2s ease;
+  }
+
+  .mobile-upload-fab span {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .mobile-upload-fab:active {
+    transform: scale(0.96);
+  }
+
+  /* Slide-up bottom sheet instead of display: none */
   .right-upload-panel {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  /* Hide the mode badge on mobile screens */
-  .top-actions,
-  #roleTag {
-    display: none !important;
-  }
-
-  /* Expand the search bar to occupy the freed-up space */
-  .search-box {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    margin-right: 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+    padding: 24px 20px 30px;
+    box-sizing: border-box;
+    z-index: 1000;
+    transform: translateY(105%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Active state when opened via FAB */
+  .right-upload-panel.active {
+    transform: translateY(0);
+  }
+
+  /* Close button inside sheet header */
+  .close-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 22px;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    margin-left: 12px;
+  }
+
+  .close-upload-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+
+  /* Dark backdrop overlay behind the sheet */
+  .upload-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .upload-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
   }
 }

@@ -224,7 +224,11 @@
       <div class="workspace-area">
         <!-- Top Bar -->
         <header class="top-nav">
-          <button id="menuToggleBtn" class="menu-toggle-btn" aria-label="Toggle Menu">
+          <button
+            id="menuToggleBtn"
+            class="menu-toggle-btn"
+            aria-label="Toggle Menu"
+          >
             ☰
           </button>
           <div class="search-box">
@@ -316,8 +320,29 @@
           <aside class="right-upload-panel" id="uploadSidePanel">
             <div class="upload-panel-card">
               <div class="upload-panel-header">
-                <h3>Upload Academic Note</h3>
-                <p>Submit materials for faculty verification & peer access</p>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                  "
+                >
+                  <div>
+                    <h3>Upload Academic Note</h3>
+                    <p>
+                      Submit materials for faculty verification & peer access
+                    </p>
+                  </div>
+                  <!-- Close button for mobile sheet -->
+                  <button
+                    type="button"
+                    class="close-upload-btn"
+                    onclick="toggleUploadModal()"
+                    aria-label="Close upload panel"
+                  >
+                    &times;
+                  </button>
+                </div>
               </div>
 
               <form
@@ -423,6 +448,20 @@
       </div>
     </div>
 
+    <button
+      class="mobile-upload-fab"
+      id="mobileUploadFab"
+      onclick="toggleUploadModal()"
+      aria-label="Upload note"
+    >
+      <span>+</span> Upload Note
+    </button>
+
+    <div
+      class="modal-backdrop"
+      id="uploadBackdrop"
+      onclick="toggleUploadModal()"
+    ></div>
     <script src="app.js"></script>
   </body>
 </html>
