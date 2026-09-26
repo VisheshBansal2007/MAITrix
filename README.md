@@ -93,8 +93,9 @@ A lightweight, community-driven academic platform engineered for engineering stu
 | `users` | Role accounts and subject assignments | `id`, `name`, `role`, `password`, `subject` |
 | `comments` | Threaded discussions under uploads | `id`, `resource_id`, `user_name`, `text`, `subject` |
 | `config` | Administrative security and passkeys | `key`, `value` |
-<br>
+
 ---
+
 **Local Setup & Installation**-Running MAITrix locally requires no complex runtime configurations, databases, or npm dependencies.
 
 **Prerequisites**<br>
