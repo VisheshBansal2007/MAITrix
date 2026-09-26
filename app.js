@@ -149,6 +149,44 @@ document.addEventListener("DOMContentLoaded", () => {
       renderCurrentView();
     });
   }
+
+  // --- Mobile Hamburger & Sidebar Toggle Logic ---
+  const menuBtn = document.getElementById("menuToggleBtn");
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+
+  function toggleSidebar() {
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle("sidebar-open");
+    if (overlay) overlay.classList.toggle("active", isOpen);
+  }
+
+  function closeSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.remove("sidebar-open");
+    if (overlay) overlay.classList.remove("active");
+  }
+
+  // 1. Open / close when hamburger is clicked
+  if (menuBtn) {
+    menuBtn.addEventListener("click", toggleSidebar);
+  }
+
+  // 2. Close when tapping the dark background overlay
+  if (overlay) {
+    overlay.addEventListener("click", closeSidebar);
+  }
+
+  // 3. Auto-close when clicking any link inside the sidebar on mobile
+  if (sidebar) {
+    sidebar.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+          closeSidebar();
+        }
+      });
+    });
+  }
 });
 
 function continueAsGuest() {

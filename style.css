@@ -634,3 +634,95 @@ body {
   color: #b91c1c;
   border: 1px solid #fecaca;
 }
+
+/* Desktop defaults: keep toggle and overlay invisible */
+.menu-toggle-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: var(--text-dark);
+  margin-right: 8px;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Mobile & Tablet screens: Switch fixed sidebar to sliding drawer */
+@media (max-width: 768px) {
+  /* Show hamburger toggle button */
+  .menu-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Adjust top bar layout for small screens */
+  .top-nav {
+    padding: 10px 16px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  /* Transform sidebar into an off-canvas drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    max-width: 80vw;
+    background: var(--surface-white);
+    z-index: 999;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Slide sidebar into view when active */
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Show and fade-in backdrop overlay */
+  .sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Ensure center workspace takes full width on phone */
+  .center-feed {
+    padding: 14px 12px;
+  }
+
+  /* Hide desktop upload panel on mobile screens to prevent overflow */
+  .right-upload-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide the mode badge on mobile screens */
+  .top-actions,
+  #roleTag {
+    display: none !important;
+  }
+
+  /* Expand the search bar to occupy the freed-up space */
+  .search-box {
+    width: 100%;
+    margin-right: 0;
+  }
+}
