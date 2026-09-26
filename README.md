@@ -128,3 +128,14 @@ Open the browser console (F12) to verify successful resource fetches from Google
 
 5.**Deploy via GitHub Pages** after pushing your latest code changes to your repository's main branch.
 
+---
+
+**Authors & Acknowledgments**
+
+Developed by **Team codeAgrasen**<br>
+Lead Architect & Developer - **Vishesh Bansal**<br>
+for **MAITron 2026**. Special thanks to the faculty mentors and student peers who provided feedback during testing.
+<br>
+
+---
+
