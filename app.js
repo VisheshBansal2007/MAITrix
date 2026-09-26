@@ -474,32 +474,43 @@ function renderCurrentView() {
 
     // Faculty Annotation (Handles multiple flagged errors or single endorsement)
     let annotationHTML = "";
-    if (item.teacher_note) {
-      if (isFlagged && item.teacher_note.includes("|||")) {
-        // Multiple errors: split and map into distinct warning boxes
+    if (item.teacher_note && item.teacher_note.trim()) {
+      if (isFlagged) {
+        // Split multiple teacher errors separated by |||
         const errorEntries = item.teacher_note.split("|||");
         annotationHTML = errorEntries
           .map((entry) => {
             const trimmed = entry.trim();
-            // Parse "[Faculty Name]: Message"
-            const match = trimmed.match(/^\[(.*?)\]:\s*(.*)$/);
-            const reviewer = match ? match[1] : item.verified_by || "Faculty Review";
-            const message = match ? match[2] : trimmed;
+            let faculty = item.verified_by || "Faculty Review";
+            let message = trimmed;
+
+            if (trimmed.includes(":::")) {
+              const parts = trimmed.split(":::");
+              faculty = parts[0].trim();
+              message = parts.slice(1).join(":::").trim();
+            } else if (trimmed.startsWith("[")) {
+              // Backward compatibility for old bracket notation
+              const match = trimmed.match(/^\[(.*?)\]:\s*(.*)$/);
+              if (match) {
+                faculty = match[1];
+                message = match[2];
+              }
+            }
 
             return `
               <div class="faculty-annotation caution-box" style="margin-bottom: 6px;">
-                <div class="annotation-badge">⚠️ ${reviewer}</div>
+                <div class="annotation-badge">⚠️ Flagged by ${faculty}</div>
                 <p class="annotation-text">"${message}"</p>
               </div>`;
           })
           .join("");
       } else {
-        // Single error or single endorsement note
+        // Single endorsement note
         const annotator = item.verified_by || item.teacher || "Faculty Review";
         annotationHTML = `
-          <div class="faculty-annotation ${isFlagged ? "caution-box" : ""}">
-            <div class="annotation-badge">${isFlagged ? "⚠️ " : ""}${annotator}</div>
-            <p class="annotation-text">"${item.teacher_note.replace(/^\[.*?\]:\s*/, "")}"</p>
+          <div class="faculty-annotation">
+            <div class="annotation-badge">★ Endorsed by ${annotator}</div>
+            <p class="annotation-text">"${item.teacher_note}"</p>
           </div>`;
       }
     }
@@ -652,7 +663,7 @@ async function updateStatus(id, newStatus, note = "") {
 }
 
 async function promptFlag(id) {
-  const item = cachedResources.find((r) => r.id === id);
+  const item = cachedResources.find((r) => String(r.id) === String(id));
   if (!item) return;
 
   if (!currentUser || currentUser.role !== "teacher") {
@@ -661,42 +672,54 @@ async function promptFlag(id) {
   }
 
   const newIssue = prompt(
-    "Enter specific correction guidance or caution message for students:"
+    "Enter specific correction guidance or caution message for students:",
   );
   if (!newIssue || !newIssue.trim()) return;
 
   const currentFaculty = currentUser.name || "Faculty Review";
-  const formattedEntry = `[${currentFaculty}]: ${newIssue.trim()}`;
+  const formattedEntry = `${currentFaculty}:::${newIssue.trim()}`;
 
-  // If previous errors already exist, append with a delimiter ( ||| ), otherwise set fresh
+  // If already flagged, stack new error with ' ||| '.
+  // If previously expert or pending, start fresh so old endorsement notes are discarded.
   let combinedNotes = "";
-  if (item.status === "flagged" && item.teacher_note) {
+  if (
+    item.status === "flagged" &&
+    item.teacher_note &&
+    item.teacher_note.includes(":::")
+  ) {
     combinedNotes = `${item.teacher_note} ||| ${formattedEntry}`;
   } else {
     combinedNotes = formattedEntry;
   }
 
-  // Optimistic UI updates
+  // 1. Optimistic Local State Update
   item.status = "flagged";
-  item.verified_by = currentFaculty; // Tracks the latest reviewing faculty
+  item.verified_by = currentFaculty;
   item.teacher_note = combinedNotes;
   renderCurrentView();
 
-  // Sync to SheetDB
+  // 2. Sync to SheetDB using standard fetch
   try {
-    await fetchSheetDB(`/id/${id}?sheet=resources`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        data: {
-          status: "flagged",
-          verified_by: currentFaculty,
-          teacher_note: combinedNotes,
-        },
-      }),
-    });
+    const res = await fetch(
+      `${SHEETDB_URL}/id/${encodeURIComponent(id)}?sheet=resources`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: {
+            status: "flagged",
+            verified_by: currentFaculty,
+            teacher_note: combinedNotes,
+          },
+        }),
+      },
+    );
+
+    const data = await res.json();
+    console.log("Flag saved to database:", data);
   } catch (err) {
-    console.error("Failed to sync error flag:", err);
+    console.error("Failed to sync error flag to database:", err);
+    alert("Network error: Could not save flag to the database.");
   }
 }
 
