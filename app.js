@@ -1,4 +1,4 @@
-const SHEETDB_URL = "https://sheetdb.io/api/v1/4d29m8yugi9d6";
+const SHEETDB_URL = "https://sheetdb.io/api/v1/4350udqf9g7bm";
 
 const TEACHER_DATABASE = {
   "Computational Methods": [
