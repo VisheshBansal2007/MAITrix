@@ -130,6 +130,17 @@ Open the browser console (F12) to verify successful resource fetches from Google
 
 ---
 
+**Contributing & Forking**
+
+Because the default SheetDB backend is origin-locked strictly to the production deployment (`https://visheshbansal2007.github.io`), local clones will encounter CORS restrictions by design.
+
+To run or test changes locally with an active database:<br>
+1.Create a free account at [SheetDB.io](https://sheetdb.io).<br>
+2.Connect your own Google Sheet using the schema outlined in the Database Architecture section.<br>
+3.Replace the SHEETDB_URL constant in app.js with your personal endpoint.
+
+---
+
 **Authors & Acknowledgments**
 
 Developed by **Team codeAgrasen**<br>
