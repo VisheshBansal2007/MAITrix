@@ -1,5 +1,5 @@
-// const SHEETDB_URL = "https://sheetdb.io/api/v1/4d29m8yugi9d6";
-const SHEETDB_URL = "https://sheetdb.io/api/v1/4350udqf9g7bm";
+const SHEETDB_URL = "https://sheetdb.io/api/v1/4d29m8yugi9d6";
+// const SHEETDB_URL = "https://sheetdb.io/api/v1/4350udqf9g7bm";
 
 const TEACHER_DATABASE = {
   "Computational Methods": [
@@ -358,7 +358,11 @@ async function handleSignup(e) {
   try {
     await fetch(`${SHEETDB_URL}?sheet=users`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: "https://sheetdb.io/api/v1/4350udqf9g7bm",
+      },
       body: JSON.stringify({ data: [payload] }),
     });
 
